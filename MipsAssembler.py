@@ -1,20 +1,30 @@
-#typical style commands
+#typical style commands my cpp instructor would yell at me for all these global variables
 rTypes=[]
 iTypes=[]
 #atypical ones
 shiftTypes=[]
 jumpTypes=[]
 dataTypes=[]
-
+relativeBranchTypes=[]
 #dictionary for opcodes/functin codes and registers
 opcodes={}
 function= {}
-
-
 register= {'zero':'00000','at':'00001','v0':'00010','v1':'00011','a0':'00100','a1':'00101','a2':'00110','a3':'00111',
             't0':'01000','t1':'01001','t2':'01010','t3':'01011','t4':'01100','t5':'01101','t6':'01110','t7':'01111',
             's0':'10000','s1':'10001','s2':'10010','s3':'10011','s4':'10100','s5':'10101','s6':'10110','s7':'10111',
             't8':'11000','t9':'11001','k0':'11010','k1':'11011','gp':'11100','sp':'11101','fp':'11110','ra':'11111'}
+#dictionary for labels for jumping
+labels={}
+
+
+
+
+
+def decimalToTwosComplment(val, bits):
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val
+
 
 
 def hexToBin(input,bits):
@@ -58,6 +68,11 @@ def addIType(label, op):
 
 def addDataType(label, op):
     dataTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    return
+
+def addRelativeBranch(label, op):
+    relativeBranchTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
@@ -106,6 +121,21 @@ def dataType(command):
     hexcode= binToHex(binary,8)
     return hexcode
 
+def relativeBranchType(command, line):
+    print (command)
+    op=opcodes[command[0]]
+    rs=register[command[1]]
+    rt=register[command[2]]
+    label=command[3]
+    jump=labels[label]-i-1
+    #print(jump)
+    immediate=bin(jump).zfill(16)
+    immediate=immediate.replace('b','')
+  #  print (immediate)
+    binary=op+rs+rt+immediate
+    hexcode= binToHex(binary,8)
+    return hexcode
+
 
 
             
@@ -133,7 +163,9 @@ addIType('sltiu','b')
 #typical data types-atypical I Type
 addDataType('lw','23')
 addDataType('sw','2b')
-
+#typical reatlive branches
+addRelativeBranch('beq','4')
+addRelativeBranch('bne','5')
 
 checkLength(opcodes,6,"Bad OPcode:")
 checkLength(function,6,"Bad Function:")
@@ -142,7 +174,7 @@ checkLength(register,5,"Bad Register:")
 
 
 
-inName='test_case2'
+inName='testCases/test_case3'
 outName=inName+'mine'
 with open(inName+'.s') as f:
     raw = f.readlines()
@@ -157,6 +189,16 @@ raw = [x.lower() for x in raw]
 splitFeilds =[x.split() for x in raw]
 outFile= open(outName+'.obj','w')
 
+i=0
+for x in splitFeilds:
+    if len(x)==1:
+        mark=x[0].replace(':','')
+        labels[mark]=i
+        i-=1
+        splitFeilds.remove(x)
+    i+=1
+
+i=0
 for x in splitFeilds:
     if x[0] in rTypes:
         outFile.write (rType(x)+'\n')
@@ -166,9 +208,14 @@ for x in splitFeilds:
         outFile.write(dataType(x)+'\n')
     elif x[0] in shiftTypes:
         outFile.write(shiftType(x)+'\n')
+    elif x[0] in relativeBranchTypes:
+        outFile.write(relativeBranchType(x,i)+'\n')
     else:
+        print(x)
         outFile.write(''.join(x))
         outFile.write('yarrr\n')
+
+        i+=1
 outFile.close()     
 
 
