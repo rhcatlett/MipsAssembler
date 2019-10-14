@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+import sys
+
 #typical style commands my cpp instructor would yell at me for all these global variables
 rTypes=[]
 iTypes=[]
@@ -128,23 +132,21 @@ def dataType(command):
     return hexcode
 
 def relativeBranchType(command, line):
-    #print (command)
     op=opcodes[command[0]]
     rs=register[command[1]]
     rt=register[command[2]]
-    label=command[3]
-    #print('Jumping to '+label+' at '+str(labels[label])+' from '+str(i))
-    jump=labels[label]-(i+1)
-    #print(jump)
+    targetLabel=command[3]
+    jump=labels[targetLabel]-(line+1)
     immediate=decToTwosComplment(jump,16)
-    #print (immediate)
     binary=op+rs+rt+immediate
     hexcode= binToHex(binary,8)
     return hexcode
 
 
+#Fill the dictionaries up
+#could be done statically, but it was a lot more typing and runtime speed isnt very important
 
-            
+
 #typical rtypes    
 addRType('add','0','20')
 addRType('addu','0','21')
@@ -155,9 +157,11 @@ addRType('or','0','25')
 addRType('nor','0','27')
 addRType('slt','0','2a')
 addRType('sltu','0','2b')
+
 #shift types/atyipcal r types
 addShiftType('sll','0','00')
 addShiftType('srl','0','02')
+
 
 #typical I types
 addIType('addi','8')
@@ -166,25 +170,31 @@ addIType('andi','c')
 addIType('ori','d')
 addIType('slti','a')
 addIType('sltiu','b')
+
 #typical data types-atypical I Type
 addDataType('lw','23')
 addDataType('sw','2b')
-#typical reatlive branches
+
+#typical reatlive branches-atypical I type
 addRelativeBranch('beq','4')
 addRelativeBranch('bne','5')
 
+
+#make sure the dictionary codes are the correct length
+#not strictly necessary, but helps prevent preventable errors
 checkLength(opcodes,6,"Bad OPcode:")
 checkLength(function,6,"Bad Function:")
 checkLength(register,5,"Bad Register:")
     
+#the first passed argument is argv[1]
+inName=sys.argv[1]
+outName=inName.replace('.s','.obj')
 
-
-
-inName='testCases/test_case3'
-outName=inName+'mine'
-with open(inName+'.s') as f:
+#read all the lines into raw
+with open(inName) as f:
     raw = f.readlines()
 
+#strip unneccsary whitespacing and syntax, force to lowercase
 raw = [x.strip() for x in raw] 
 raw = [x.replace(',',' ') for x in raw]
 raw = [x.replace('(',' ') for x in raw]
@@ -192,52 +202,48 @@ raw = [x.replace(')',' ') for x in raw]
 raw = [x.replace('$','') for x in raw]
 raw = [x.lower() for x in raw]
 
+#split each line into seperate feilds so that we have a two dimensional list
+#of the lines and the feilds within the lines
 splitFeilds =[x.split() for x in raw]
-outFile= open(outName+'.obj','w')
 
-i=0
-while i < len(splitFeilds):
-    x=splitFeilds[i]
-    print (x)
-    print(i)
+
+#go through the lines and handles the labels
+#does so by removing the labels from splitFeilds and filling
+#the labels dictionary with the label:line pairs
+#currently assumes each label has its own line
+lineIndex=0
+while lineIndex < len(splitFeilds):
+    x=splitFeilds[lineIndex]
     if len(x)==1:
         mark=x[0].replace(':','')
-        labels[mark]=i
-        print('Label:'+mark+' at:'+str(i)+'/'+str(labels[mark]))
+        labels[mark]=lineIndex
         splitFeilds.remove(x)
     else:
-        i+=1
-    print(i)
+        lineIndex+=1
 
-i=0
-for x in splitFeilds:
-    if x[0] in rTypes:
-        outFile.write (rType(x)+'\n')
-    elif x[0] in iTypes:
-        outFile.write( iType(x)+'\n')
-    elif x[0] in dataTypes:
-        outFile.write(dataType(x)+'\n')
-    elif x[0] in shiftTypes:
-        outFile.write(shiftType(x)+'\n')
-    elif x[0] in relativeBranchTypes:
-        outFile.write(relativeBranchType(x,i)+'\n')
-    else:
+#goes thrrough each line of commands after the labels have been handled
+#shunts the commands off to the appropriate functions
+lineIndex=0
+good=True#did we properly handle all commands
+output=''
+for currentLine in splitFeilds:
+    if currentLine[0] in rTypes:
+        output+=rType(currentLine)+'\n'
+    elif currentLine[0] in iTypes:
+        output+= iType(currentLine)+'\n'
+    elif currentLine[0] in dataTypes:
+        output+=dataType(currentLine)+'\n'
+    elif currentLine[0] in shiftTypes:
+        output+=shiftType(currentLine)+'\n'
+    elif currentLine[0] in relativeBranchTypes:
+        output+=relativeBranchType(currentLine,lineIndex)+'\n'
+    else:#if the command is unimplmented, dont print to file
+         #but keep going to collect error messages
+        good=False
         print(x)
-        outFile.write(''.join(x))
-        outFile.write('yarrr\n')
-
-    i+=1
-outFile.close()     
-
-
-with open(inName+'.obj') as f:
-    correct = f.readlines()
-with open(outName+'.obj') as f:
-    mine = f.readlines()
-correct = [x.strip() for x in correct] 
-mine = [x.strip() for x in mine] 
-
-for x in range (len(correct)):
-    if correct[x]!=mine[x]:
-        print('Error atline '+str(x))
-        print('correct: '+correct[x]+'\nmine:\t'+mine[x])
+    lineIndex+=1
+#if no errors write to file
+if good==True:
+    outFile= open(outName,'w')
+    outFile.write(output)
+    outFile.close()   
