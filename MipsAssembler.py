@@ -38,6 +38,7 @@ def addRType(label, op,func):
     return
     
 def addIType(label, op):
+    iTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
