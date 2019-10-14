@@ -30,6 +30,13 @@ def binToHex(input, places):
     ret=hex(int(input, 2))[2:].zfill(places).replace('0x','')
     return ret
 
+
+def checkLength(dictionary, length, error):
+    for x in dictionary:
+        if len(dictionary[x])!=length:
+            print(error+x+":"+dictionary[x])
+
+
 def addRType(label, op,func):
     rTypes.append(label)
     opcodes[label]=hexToBin(op,6)
@@ -41,6 +48,12 @@ def addIType(label, op):
     iTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
+
+def addDataType(label, op):
+    dataTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    return
+
 
 
 def rType(command):
@@ -55,7 +68,7 @@ def rType(command):
     return hexcode
 
 def iType(command):
-    print(command)
+    
     op=opcodes[command[0]]
     rt=register[command[1]]
     rs=register[command[2]]
@@ -65,12 +78,17 @@ def iType(command):
     return hexcode
 
 
+def dataType(command):
+    op=opcodes[command[0]]
+    rt=register[command[1]]
+    immediate=decToBin(command[2],16)
+    rs=register[command[3]]
+    binary=op+rs+rt+immediate
+    hexcode= binToHex(binary,8)
+    return hexcode
 
 
-def checkLength(dictionary, length, error):
-    for x in dictionary:
-        if len(dictionary[x])!=length:
-            print(error+x+":"+dictionary[x])
+
             
 #typical rtypes    
 addRType('add','0','20')
@@ -89,6 +107,9 @@ addIType('andi','c')
 addIType('ori','d')
 addIType('slti','a')
 addIType('sltiu','b')
+#typical data types-atypical I Type
+addDataType('lw','23')
+addDataType('sw','2b')
 
 
 checkLength(opcodes,6,"Bad OPcode:")
@@ -118,6 +139,8 @@ for x in splitFeilds:
         outFile.write (rType(x)+'\n')
     elif x[0] in iTypes:
         outFile.write( iType(x)+'\n')
+    elif x[0] in dataTypes:
+        outFile.write(dataType(x)+'\n')
     else:
         outFile.write(''.join(x))
         outFile.write('yarrr\n')
