@@ -22,12 +22,13 @@ labels={}
 
 
 
-
+#the defualt python conversions area little unweildy for my purpose
+#convers an input,int or string type, in decimal format to a bits-long string binary representation
 def decToBin(input,bits):
     ret=bin(int(str(input),10))[2:].zfill(bits)
     return ret
 
-
+#same converts an int type input to a signed bits long binary string
 def decToTwosComplment(input, bits):
     if input>=0:
        val= decToBin(input, bits)  
@@ -39,55 +40,56 @@ def decToTwosComplment(input, bits):
     return val
 
 
-
+#converts an unsigned hex string to an unsigned bit string
 def hexToBin(input,bits):
     ret=bin(int(input, 16))[2:].zfill(bits)
     return ret
 
 
-
+#converts an unsigned binary string to hex string
 def binToHex(input, places):
     ret=hex(int(input, 2))[2:].zfill(places).replace('0x','')
     return ret
 
-
+#makes sure that all entities in a dicitonary are the correct length
 def checkLength(dictionary, length, error):
-    for x in dictionary:
-        if len(dictionary[x])!=length:
-            print(error+x+":"+dictionary[x])
+    for key in dictionary:
+        if len(dictionary[key])!=length:
+            print(error+key+":"+dictionary[key])
 
-
+#handles adding typical r types to teh dictionaries
 def addRType(label, op,func):
     rTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     function[label]=hexToBin(func,6)
-
     return
-    
+
+#shift types are atypical r types and are easiest to handkle sperately with my architecture
 def addShiftType(label, op,func):
     shiftTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     function[label]=hexToBin(func,6)
-
     return
-    
+
+#adds typical immidiate types to the dictionary
 def addIType(label, op):
     iTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
+#lw/sw/etc have an atypical format and it is easier to handle them sperately from typical I types
 def addDataType(label, op):
     dataTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
+#beq/bne/etc have an atypical format and it is easier to handle them sperately from typical I types
 def addRelativeBranch(label, op):
     relativeBranchTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
-
-
+# given a list of the four feilds in an r type, returns the hex encoding
 def rType(command):
     op=opcodes[command[0]]
     rd=register[command[1]]
@@ -99,6 +101,7 @@ def rType(command):
     hexcode= binToHex(binary,8)
     return hexcode
 
+# given a list of the four feilds in an shift type, returns the hex encoding
 def shiftType(command):
     op=opcodes[command[0]]
     rd=register[command[1]]
@@ -111,6 +114,7 @@ def shiftType(command):
     return hexcode
 
 
+# given a list of the four feilds in an I type, returns the hex encoding
 def iType(command):
     
     op=opcodes[command[0]]
@@ -121,7 +125,7 @@ def iType(command):
     hexcode= binToHex(binary,8)
     return hexcode
 
-
+# given a list of the four feilds in a data type, the hex encoding
 def dataType(command):
     op=opcodes[command[0]]
     rt=register[command[1]]
@@ -131,6 +135,7 @@ def dataType(command):
     hexcode= binToHex(binary,8)
     return hexcode
 
+# given a list of the three feilds in an relative branch type, returns the hex encoding
 def relativeBranchType(command, line):
     op=opcodes[command[0]]
     rs=register[command[1]]
@@ -188,7 +193,7 @@ checkLength(register,5,"Bad Register:")
     
 #the first passed argument is argv[1]
 inName=sys.argv[1]
-outName=inName.replace('.s','.obj')
+outName=inName.replace('.s','.obj')# turn *.s into *.obj
 
 #read all the lines into raw
 with open(inName) as f:
@@ -227,6 +232,7 @@ lineIndex=0
 good=True#did we properly handle all commands
 output=''
 for currentLine in splitFeilds:
+    print(currentLine)
     if currentLine[0] in rTypes:
         output+=rType(currentLine)+'\n'
     elif currentLine[0] in iTypes:
@@ -240,7 +246,7 @@ for currentLine in splitFeilds:
     else:#if the command is unimplmented, dont print to file
          #but keep going to collect error messages
         good=False
-        print(x)
+        print ('Cannot assemble'+currentLine+' at line '+str(lineIndex) )
     lineIndex+=1
 #if no errors write to file
 if good==True:
