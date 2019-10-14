@@ -30,6 +30,8 @@ labels={}
 
 
 
+
+
 #is the given formatted line a label board
 def isLabel(currentLine):
     return len(currentLine)==1 and currentLine[0].endswith(':') and currentLine[0].replace(':','') in labels
@@ -133,6 +135,89 @@ def addRelativeBranch(label, op):
     relativeBranchTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
+
+def initiliazeDictionaries():
+    #Fill the dictionaries up
+    #could be done statically, but it was a lot more typing and runtime speed isnt very important
+    #typical rtypes -format: command $rd,$rs,$rt
+    addRType('add','0','20')
+    addRType('sub','0','22')
+    addRType('addu','0','21')
+    addRType('subu','0','23')
+    addRType('and','0','24')
+    addRType('or','0','25')
+    addRType('nor','0','27')
+    addRType('xor','0','26')
+    addRType('slt','0','2a')
+    addRType('sltu','0','2b')
+
+
+    #shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
+    addShiftType('sll','0','00')
+    addShiftType('srl','0','02')
+    addShiftType('sra','0','3')
+
+    #variable shift types-format: command $rd,$rt,$rs
+    addShiftVariableType('sllv','0','4')
+    addShiftVariableType('srlv','0','6')
+    addShiftVariableType('srav','0','7')
+    #addShiftVariableType('','0','')
+
+
+    #mult types/ atypical r types-format: command $rs, $rt
+    addMultType('mult','0','18')
+    addMultType('div','0','1a')
+    addMultType('multu','0','19')
+    addMultType('divu','0','1b')
+    #addMultType('','0','')
+
+    #mf types/ atyipcal r types-format: command $rd
+    addMFType('mfhi','0','10')
+    addMFType('mflo','0','12')
+
+    #addMFType('','0','')
+
+    #typical I types-format: command $rt, $rs, immediate
+    addIType('addi','8')
+    addIType('addiu','9')
+    addIType('andi','c')
+    addIType('ori','d')
+    addIType('xori','e')
+    addIType('slti','a')
+    addIType('sltiu','b')
+    #addIType('','')
+
+    #typical data types-atypical I Type-format: command $rt, immediat($rs)
+    addDataType('lb','20')
+    addDataType('lbu','24')
+    addDataType('lh','21')
+    addDataType('lhu','25')
+    addDataType('lw','23')
+    addDataType('sb','28')
+    addDataType('sw','2b')
+    addDataType('ll','20')
+    addDataType('sc','38')
+
+    #typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
+    addRelativeBranch('beq','4')
+    addRelativeBranch('bne','5')
+
+
+    #make sure the dictionary codes are the correct length
+    #not strictly necessary, but helps prevent preventable errors
+    checkLength(opcodes,6,"Bad OPcode:")
+    checkLength(function,6,"Bad Function:")
+    checkLength(register,5,"Bad Register:")
+    return
+
+
+
+
+
+
+
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~DICTIONARY LOADERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

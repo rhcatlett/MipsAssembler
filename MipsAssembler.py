@@ -3,86 +3,15 @@
 import sys
 import MipsAssemblerLib as MAL
 
+#load the dictionaries up with the defualt mips instructions
+MAL.initiliazeDictionaries()
 
-
-
-#Fill the dictionaries up
-#could be done statically, but it was a lot more typing and runtime speed isnt very important
-#typical rtypes -format: command $rd,$rs,$rt
-MAL.addRType('add','0','20')
-MAL.addRType('sub','0','22')
-MAL.addRType('addu','0','21')
-MAL.addRType('subu','0','23')
-MAL.addRType('and','0','24')
-MAL.addRType('or','0','25')
-MAL.addRType('nor','0','27')
-MAL.addRType('xor','0','26')
-MAL.addRType('slt','0','2a')
-MAL.addRType('sltu','0','2b')
-
-
-#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
-MAL.addShiftType('sll','0','00')
-MAL.addShiftType('srl','0','02')
-MAL.addShiftType('sra','0','3')
-
-#variable shift types-format: command $rd,$rt,$rs
-MAL.addShiftVariableType('sllv','0','4')
-MAL.addShiftVariableType('srlv','0','6')
-MAL.addShiftVariableType('srav','0','7')
-#addShiftVariableType('','0','')
-
-
-#mult types/ atypical r types-format: command $rs, $rt
-MAL.addMultType('mult','0','18')
-MAL.addMultType('div','0','1a')
-MAL.addMultType('multu','0','19')
-MAL.addMultType('divu','0','1b')
-#addMultType('','0','')
-
-#mf types/ atyipcal r types-format: command $rd
-MAL.addMFType('mfhi','0','10')
-MAL.addMFType('mflo','0','12')
-
-#addMFType('','0','')
-
-#typical I types-format: command $rt, $rs, immediate
-MAL.addIType('addi','8')
-MAL.addIType('addiu','9')
-MAL.addIType('andi','c')
-MAL.addIType('ori','d')
-MAL.addIType('xori','e')
-MAL.addIType('slti','a')
-MAL.addIType('sltiu','b')
-#addIType('','')
-
-#typical data types-atypical I Type-format: command $rt, immediat($rs)
-MAL.addDataType('lb','20')
-MAL.addDataType('lbu','24')
-MAL.addDataType('lh','21')
-MAL.addDataType('lhu','25')
-MAL.addDataType('lw','23')
-MAL.addDataType('sb','28')
-MAL.addDataType('sw','2b')
-MAL.addDataType('ll','20')
-MAL.addDataType('sc','38')
-
-#typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
-MAL.addRelativeBranch('beq','4')
-MAL.addRelativeBranch('bne','5')
-
-
-#make sure the dictionary codes are the correct length
-#not strictly necessary, but helps prevent preventable errors
-MAL.checkLength(MAL.opcodes,6,"Bad OPcode:")
-MAL.checkLength(MAL.function,6,"Bad Function:")
-MAL.checkLength(MAL.register,5,"Bad Register:")
-    
-#the first passed argument is argv[1]
+#the first passed argument is argv[1] and should be the infile
 inName=sys.argv[1]
+#outfile name should be the same, just .obj
 outName=inName.replace('.s','.obj')# turn *.s into *.obj
 
-#read all the lines into raw
+#read all the lines into list raw with an entry for each line 
 with open(inName) as f:
     raw = f.readlines()
 
