@@ -21,6 +21,11 @@ def hexToBin(input,bits):
     ret=bin(int(input, 16))[2:].zfill(bits)
     return ret
 
+def decToBin(input,bits):
+    ret=bin(int(input,10))[2:].zfill(bits)
+    return ret
+
+
 def binToHex(input, places):
     ret=hex(int(input, 2))[2:].zfill(places).replace('0x','')
     return ret
@@ -33,7 +38,6 @@ def addRType(label, op,func):
     return
     
 def addIType(label, op):
-    iTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
@@ -50,10 +54,11 @@ def rType(command):
     return hexcode
 
 def iType(command):
+    print(command)
     op=opcodes[command[0]]
     rt=register[command[1]]
     rs=register[command[2]]
-    immediate=hexToBin(command[3],16)
+    immediate=decToBin(command[3],16)
     binary=op+rs+rt+immediate
     hexcode= binToHex(binary,8)
     return hexcode
