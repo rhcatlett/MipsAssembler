@@ -2,14 +2,23 @@
 
 import sys
 
-#typical style commands my cpp instructor would yell at me for all these global variables
-rTypes=[]
-iTypes=[]
-#atypical ones
-shiftTypes=[]
-jumpTypes=[]
-dataTypes=[]
-relativeBranchTypes=[]
+#A bunch of dictionaries and list to turn strings into corresponding ints and quickly figure out a strings type
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~MAPPINGS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#R  type commands
+rTypes=[]#typical rtypes -format: command $rd,$rs,$rt
+shiftTypes=[]#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
+shiftVariableTypes=[]#variable shift types-format: command $rd,$rt,$rs
+multTypes=[]#mult types/ atypical r types-format: command $rs, $rt
+mfTypes=[]#mf types/ atyipcal r types-format: command $rd
+
+#R Type Commds
+iTypes=[]#typical I types-format: command $rt, $rs, immediate
+relativeBranchTypes=[]#typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
+dataTypes=[]#typical data types-atypical I Type-format: command $rt, immediat($rs)
+
+#jumps not implmented
+#jumpTypes=[]#typical jump types-form: command addr
+#jumpAddrTypes=[]#typical jump types-form: command $rs
 #dictionary for opcodes/functin codes and registers
 opcodes={}
 function= {}
@@ -20,9 +29,12 @@ register= {'zero':'00000','at':'00001','v0':'00010','v1':'00011','a0':'00100','a
 #dictionary for labels for jumping
 labels={}
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~MAPPINGS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-#the defualt python conversions area little unweildy for my purpose
+#the defualt python number format conversions are a little unweildy for my purpose
+#just some wrappers to make them easier
+#~~~~~~~~~~~~~~~~~~~~NUMBER FORMAT CONVERTERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #convers an input,int or string type, in decimal format to a bits-long string binary representation
 def decToBin(input,bits):
     ret=bin(int(str(input),10))[2:].zfill(bits)
@@ -50,14 +62,16 @@ def hexToBin(input,bits):
 def binToHex(input, places):
     ret=hex(int(input, 2))[2:].zfill(places).replace('0x','')
     return ret
+#~~~~~~~~~~~~~~~~~~~~NUMBER FORMAT CONVERTERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#makes sure that all entities in a dicitonary are the correct length
+#~~~~~~~~~~~~~~~~~~~~~~~DICTIONARY LOADERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def checkLength(dictionary, length, error):
     for key in dictionary:
         if len(dictionary[key])!=length:
             print(error+key+":"+dictionary[key])
 
 #handles adding typical r types to teh dictionaries
+#typical rtypes -format: command $rd,$rs,$rt
 def addRType(label, op,func):
     rTypes.append(label)
     opcodes[label]=hexToBin(op,6)
@@ -65,31 +79,63 @@ def addRType(label, op,func):
     return
 
 #shift types are atypical r types and are easiest to handkle sperately with my architecture
+#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
 def addShiftType(label, op,func):
     shiftTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     function[label]=hexToBin(func,6)
     return
 
+#variable shift types-format: command $rd,$rt,$rs    
+def addShiftVariableType(label, op,func):
+    shiftVariableTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    function[label]=hexToBin(func,6)
+    return
+
+#mult types are atypical r types and are easiest to handkle sperately with my architecture
+#mult types/ atypical r types-format: command $rs, $rt
+def addMultType(label, op,func):
+    multTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    function[label]=hexToBin(func,6)
+    return
+
+#mf types/ atyipcal r types-format: command $rd
+def addMFType(label, op,func):
+    mfTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    function[label]=hexToBin(func,6)
+    return
+
+
+
 #adds typical immidiate types to the dictionary
+#typical I types-format: command $rt, $rs, immediate
 def addIType(label, op):
     iTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
 #lw/sw/etc have an atypical format and it is easier to handle them sperately from typical I types
+#typical data types-atypical I Type-format: command $rt, immediat($rs)def addDataType(label, op):
 def addDataType(label, op):
     dataTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
 
 #beq/bne/etc have an atypical format and it is easier to handle them sperately from typical I types
+#typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
 def addRelativeBranch(label, op):
     relativeBranchTypes.append(label)
     opcodes[label]=hexToBin(op,6)
     return
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~DICTIONARY LOADERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~COMMAND ASSEMBLERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # given a list of the four feilds in an r type, returns the hex encoding
+#typical rtypes -format: command $rd,$rs,$rt
 def rType(command):
     op=opcodes[command[0]]
     rd=register[command[1]]
@@ -102,6 +148,7 @@ def rType(command):
     return hexcode
 
 # given a list of the four feilds in an shift type, returns the hex encoding
+#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
 def shiftType(command):
     op=opcodes[command[0]]
     rd=register[command[1]]
@@ -113,8 +160,47 @@ def shiftType(command):
     hexcode= binToHex(binary,8)
     return hexcode
 
+#variable shift types-format: command $rd,$rt,$rs
+def shiftVariableType(command):
+    op=opcodes[command[0]]
+    rd=register[command[1]]
+    rt=register[command[2]]
+    rs=register[command[3]]
+    shamt='00000'
+    funct=function[command[0]]
+    binary=op+rs+rt+rd+shamt+funct
+    hexcode= binToHex(binary,8)
+    return hexcode
 
+#mult types/ atypical r types-format: command $rs, $rt
+def multType(command):
+    op=opcodes[command[0]]
+    rd='00000'
+    rs=register[command[1]]
+    rt=register[command[2]]
+    shamt='00000'
+    funct=function[command[0]]
+    binary=op+rs+rt+rd+shamt+funct
+    hexcode= binToHex(binary,8)
+    return hexcode
+
+#mf types/ atyipcal r types-format: command $rd
+def mfType(command):
+    op=opcodes[command[0]]
+    rd=register[command[1]]
+    rs='00000'
+    rt='00000'
+    shamt='00000'
+    funct=function[command[0]]
+    binary=op+rs+rt+rd+shamt+funct
+    hexcode= binToHex(binary,8)
+    return hexcode
+
+
+
+#I Types
 # given a list of the four feilds in an I type, returns the hex encoding
+#typical I types-format: command $rt, $rs, immediate
 def iType(command):
     
     op=opcodes[command[0]]
@@ -126,6 +212,7 @@ def iType(command):
     return hexcode
 
 # given a list of the four feilds in a data type, the hex encoding
+#typical data types-atypical I Type-format: command $rt, immediat($rs)
 def dataType(command):
     op=opcodes[command[0]]
     rt=register[command[1]]
@@ -136,6 +223,7 @@ def dataType(command):
     return hexcode
 
 # given a list of the three feilds in an relative branch type, returns the hex encoding
+#typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
 def relativeBranchType(command, line):
     op=opcodes[command[0]]
     rs=register[command[1]]
@@ -147,40 +235,78 @@ def relativeBranchType(command, line):
     hexcode= binToHex(binary,8)
     return hexcode
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~COMMAND ASSEMBLERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#is the given formatted line a label board
+def isLabel(currentLine):
+    return len(currentLine)==1 and currentLine[0].endswith(':') and currentLine[0].replace(':','') in labels
+
 
 #Fill the dictionaries up
 #could be done statically, but it was a lot more typing and runtime speed isnt very important
 
-
-#typical rtypes    
+#typical rtypes -format: command $rd,$rs,$rt
 addRType('add','0','20')
-addRType('addu','0','21')
 addRType('sub','0','22')
+addRType('addu','0','21')
 addRType('subu','0','23')
 addRType('and','0','24')
 addRType('or','0','25')
 addRType('nor','0','27')
+addRType('xor','0','26')
 addRType('slt','0','2a')
 addRType('sltu','0','2b')
+#addRType('','0','')
 
-#shift types/atyipcal r types
+
+#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
 addShiftType('sll','0','00')
 addShiftType('srl','0','02')
+addShiftType('sra','0','3')
+#addShiftType('','0','')
+
+#variable shift types-format: command $rd,$rt,$rs
+addShiftVariableType('sllv','0','4')
+addShiftVariableType('srlv','0','6')
+addShiftVariableType('srav','0','7')
+#addShiftVariableType('','0','')
 
 
-#typical I types
+#mult types/ atypical r types-format: command $rs, $rt
+addMultType('mult','0','18')
+addMultType('div','0','1a')
+addMultType('multu','0','19')
+addMultType('divu','0','1b')
+#addMultType('','0','')
+
+#mf types/ atyipcal r types-format: command $rd
+addMFType('mfhi','0','10')
+addMFType('mflo','0','12')
+
+#addMFType('','0','')
+
+#typical I types-format: command $rt, $rs, immediate
 addIType('addi','8')
 addIType('addiu','9')
 addIType('andi','c')
 addIType('ori','d')
+addIType('xori','e')
 addIType('slti','a')
 addIType('sltiu','b')
+#addIType('','')
 
-#typical data types-atypical I Type
+#typical data types-atypical I Type-format: command $rt, immediat($rs)
+addDataType('lb','20')
+addDataType('lbu','24')
+addDataType('lh','21')
+addDataType('lhu','25')
 addDataType('lw','23')
+addDataType('sb','28')
 addDataType('sw','2b')
+addDataType('ll','20')
+addDataType('sc','38')
 
-#typical reatlive branches-atypical I type
+#typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
 addRelativeBranch('beq','4')
 addRelativeBranch('bne','5')
 
@@ -200,54 +326,86 @@ with open(inName) as f:
     raw = f.readlines()
 
 #strip unneccsary whitespacing and syntax, force to lowercase
-raw = [x.strip() for x in raw] 
-raw = [x.replace(',',' ') for x in raw]
-raw = [x.replace('(',' ') for x in raw]
-raw = [x.replace(')',' ') for x in raw]
-raw = [x.replace('$','') for x in raw]
-raw = [x.lower() for x in raw]
+splitFeilds = [x.strip() for x in raw] 
+splitFeilds = [x.replace(',',' ') for x in splitFeilds]
+splitFeilds = [x.replace('(',' ') for x in splitFeilds]
+splitFeilds = [x.replace(')',' ') for x in splitFeilds]
+splitFeilds = [x.replace('$','') for x in splitFeilds]
+splitFeilds = [x.lower() for x in splitFeilds]
 
 #split each line into seperate feilds so that we have a two dimensional list
 #of the lines and the feilds within the lines
-splitFeilds =[x.split() for x in raw]
+splitFeilds =[x.split() for x in splitFeilds]
 
 
 #go through the lines and handles the labels
-#does so by removing the labels from splitFeilds and filling
-#the labels dictionary with the label:line pairs
-#currently assumes each label has its own line
+#works with both freestanding labels and labels attached to other lines of code
+#if the label is freestanding, it is left as is to maintain raw count later
+#if the label is attached, it is removed from the line in splitfeilds
 lineIndex=0
 while lineIndex < len(splitFeilds):
     x=splitFeilds[lineIndex]
-    if len(x)==1:
+
+    if x[0].endswith(':'):
         mark=x[0].replace(':','')
         labels[mark]=lineIndex
-        splitFeilds.remove(x)
-    else:
-        lineIndex+=1
+        if len(x)!=1:
+            del x[0]
+   
+    lineIndex+=1
 
 #goes thrrough each line of commands after the labels have been handled
 #shunts the commands off to the appropriate functions
-lineIndex=0
+compiledLineIndex=0 #the line number where it is compiled to, used for controlling branches
+sourceLineIndex=1#the line where it lives in the source, used to retrieve the source for error logging
 good=True#did we properly handle all commands
-output=''
+output=''#what should be written to files if we handled all commands
 for currentLine in splitFeilds:
-    print(currentLine)
+    didCommand=True
+    #typical rtypes -format: command $rd,$rs,$rt
     if currentLine[0] in rTypes:
-        output+=rType(currentLine)+'\n'
-    elif currentLine[0] in iTypes:
-        output+= iType(currentLine)+'\n'
-    elif currentLine[0] in dataTypes:
-        output+=dataType(currentLine)+'\n'
+        output+=rType(currentLine)
+    #shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
     elif currentLine[0] in shiftTypes:
-        output+=shiftType(currentLine)+'\n'
+        output+=shiftType(currentLine)
+    #variable shift types-format: command $rd,$rt,$rs
+    elif currentLine[0] in shiftVariableTypes:
+        output+=shiftVariableType(currentLine)
+    #mult types/ atypical r types-format: command $rs, $rt
+    elif currentLine[0] in multTypes:
+        output+=multType(currentLine)
+    #mf types/ atyipcal r types-format: command $rd
+    elif currentLine[0] in mfTypes:
+        output+=mfType(currentLine)
+    #typical I types-format: command $rt, $rs, immediate
+    elif currentLine[0] in iTypes:
+        output+= iType(currentLine)
+    #typical data types-atypical I Type-format: command $rt, immediat($rs)
+    elif currentLine[0] in dataTypes:
+        output+=dataType(currentLine)
+    #typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
     elif currentLine[0] in relativeBranchTypes:
-        output+=relativeBranchType(currentLine,lineIndex)+'\n'
+        output+=relativeBranchType(currentLine,compiledLineIndex)
+        #if the current line is just a label, it should not be turned into hex codes
+        #still useful to trrack to help backtrack to errorfull lines in the source
+    elif isLabel(currentLine):
+        didCommand=False#we always want to increment source and add a newline
+                        #to the compiled code if we operated on a command
+                        #thhe only time we dont want to is when we didn't operate on a command
+                        #which only happens with labels
+
     else:#if the command is unimplmented, dont print to file
          #but keep going to collect error messages
         good=False
-        print ('Cannot assemble'+currentLine+' at line '+str(lineIndex) )
-    lineIndex+=1
+        errorMessage='Cannot assemble line #'+str(sourceLineIndex)+':'+str(raw[sourceLineIndex-1])
+        out+=errorMessage
+        print (errorMessage)
+    
+    sourceLineIndex+=1#we always are
+    if(didCommand):
+        output+='n'
+        compiledLineIndex+=1
+        didCommand=True
 #if no errors write to file
 if good==True:
     outFile= open(outName,'w')

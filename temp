@@ -1,0 +1,14 @@
+
+#typical rtypes -format: command $rd,$rs,$rt
+#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
+#variable shift types-format: command $rd,$rt,$rs
+#mult types/ atypical r types-format: command $rs, $rt
+#mf types/ atyipcal r types-format: command $rd
+#typical I types-format: command $rt, $rs, immediate
+#typical data types-atypical I Type-format: command $rt, immediat($rs)
+#typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
+
+
+REMEMBER THE SPECFUNCTION 
+SYSCALL
+LUI
