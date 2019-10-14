@@ -19,10 +19,19 @@ labels={}
 
 
 
+def decToBin(input,bits):
+    ret=bin(int(str(input),10))[2:].zfill(bits)
+    return ret
 
-def decimalToTwosComplment(val, bits):
-    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
-        val = val - (1 << bits)        # compute negative value
+
+def decToTwosComplment(input, bits):
+    if input>=0:
+       val= decToBin(input, bits)  
+    else:
+        msb=-2**bits
+        rest=msb-input
+        val=decToBin(rest,bits-1)
+        val=val.replace('b','')
     return val
 
 
@@ -31,9 +40,6 @@ def hexToBin(input,bits):
     ret=bin(int(input, 16))[2:].zfill(bits)
     return ret
 
-def decToBin(input,bits):
-    ret=bin(int(input,10))[2:].zfill(bits)
-    return ret
 
 
 def binToHex(input, places):
@@ -122,16 +128,16 @@ def dataType(command):
     return hexcode
 
 def relativeBranchType(command, line):
-    print (command)
+    #print (command)
     op=opcodes[command[0]]
     rs=register[command[1]]
     rt=register[command[2]]
     label=command[3]
-    jump=labels[label]-i-1
+    #print('Jumping to '+label+' at '+str(labels[label])+' from '+str(i))
+    jump=labels[label]-(i+1)
     #print(jump)
-    immediate=bin(jump).zfill(16)
-    immediate=immediate.replace('b','')
-  #  print (immediate)
+    immediate=decToTwosComplment(jump,16)
+    #print (immediate)
     binary=op+rs+rt+immediate
     hexcode= binToHex(binary,8)
     return hexcode
@@ -190,13 +196,18 @@ splitFeilds =[x.split() for x in raw]
 outFile= open(outName+'.obj','w')
 
 i=0
-for x in splitFeilds:
+while i < len(splitFeilds):
+    x=splitFeilds[i]
+    print (x)
+    print(i)
     if len(x)==1:
         mark=x[0].replace(':','')
         labels[mark]=i
-        i-=1
+        print('Label:'+mark+' at:'+str(i)+'/'+str(labels[mark]))
         splitFeilds.remove(x)
-    i+=1
+    else:
+        i+=1
+    print(i)
 
 i=0
 for x in splitFeilds:
@@ -215,7 +226,7 @@ for x in splitFeilds:
         outFile.write(''.join(x))
         outFile.write('yarrr\n')
 
-        i+=1
+    i+=1
 outFile.close()     
 
 
