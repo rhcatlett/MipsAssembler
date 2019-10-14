@@ -2,8 +2,8 @@
 rTypes=[]
 iTypes=[]
 #atypical ones
-shifts=[]
-jumps=[]
+shiftTypes=[]
+jumpTypes=[]
 dataTypes=[]
 
 #dictionary for opcodes/functin codes and registers
@@ -44,6 +44,13 @@ def addRType(label, op,func):
 
     return
     
+def addShiftType(label, op,func):
+    shiftTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    function[label]=hexToBin(func,6)
+
+    return
+    
 def addIType(label, op):
     iTypes.append(label)
     opcodes[label]=hexToBin(op,6)
@@ -58,14 +65,26 @@ def addDataType(label, op):
 
 def rType(command):
     op=opcodes[command[0]]
+    rd=register[command[1]]
     rs=register[command[2]]
     rt=register[command[3]]
-    rd=register[command[1]]
     shamt='00000'
     funct=function[command[0]]
     binary=op+rs+rt+rd+shamt+funct
     hexcode= binToHex(binary,8)
     return hexcode
+
+def shiftType(command):
+    op=opcodes[command[0]]
+    rd=register[command[1]]
+    rt=register[command[2]]
+    rs='00000'
+    shamt=decToBin(command[3],5)
+    funct=function[command[0]]
+    binary=op+rs+rt+rd+shamt+funct
+    hexcode= binToHex(binary,8)
+    return hexcode
+
 
 def iType(command):
     
@@ -100,6 +119,10 @@ addRType('or','0','25')
 addRType('nor','0','27')
 addRType('slt','0','2a')
 addRType('sltu','0','2b')
+#shift types/atyipcal r types
+addShiftType('sll','0','00')
+addShiftType('srl','0','02')
+
 #typical I types
 addIType('addi','8')
 addIType('addiu','9')
@@ -141,6 +164,8 @@ for x in splitFeilds:
         outFile.write( iType(x)+'\n')
     elif x[0] in dataTypes:
         outFile.write(dataType(x)+'\n')
+    elif x[0] in shiftTypes:
+        outFile.write(shiftType(x)+'\n')
     else:
         outFile.write(''.join(x))
         outFile.write('yarrr\n')
