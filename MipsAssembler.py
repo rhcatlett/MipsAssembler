@@ -79,6 +79,9 @@ for currentLine in splitFeilds:
     #typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
     elif currentLine[0] in MAL.relativeBranchTypes:
         output+=MAL.relativeBranchType(currentLine,compiledLineIndex)
+        #typical data types-atypical I Type-format: command $rt, immediat($rs)
+    elif currentLine[0] in MAL.jumpAddrTypes:
+        output+=MAL.jumpAddrType(currentLine)
     #special types without friends
     elif currentLine[0] in MAL.specialTypes:
         if currentLine[0]== 'lui':
@@ -88,7 +91,15 @@ for currentLine in splitFeilds:
                 immediate=MAL.decToTwosComplment(currentLine[2],16)
                 binary=op+rs+rt+immediate
                 output+= MAL.binToHex(binary,8)
-
+        elif currentLine[0]== 'syscall':
+                op=MAL.opcodes[currentLine[0]]
+                rd='00000'
+                rt='00000'
+                rs='00000'
+                shamt='00000'
+                funct=MAL.function[currentLine[0]]
+                binary=op+rs+rt+rd+shamt+funct
+                output+= MAL.binToHex(binary,8)
         #branch should be unreachable, it should only be in specialTypes if it is implmented
         else:
             good=False

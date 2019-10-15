@@ -17,7 +17,8 @@ L1: add	$t1, $t2, $t3
 	sw	$t1, 5293($s1)
 	sw	$t1, -5293($s1)
 	bne	$t1, $t2, L1
-L2: sll	$s0, $s1, 2
+L2: 
+    sll	$s0, $s1, 2
 	srl	$s1, $s0, 4
 	andi	$t7, $t8, 256 
 	ori	$t8, $t7, 3916
@@ -47,3 +48,5 @@ L2: sll	$s0, $s1, 2
     sh $s0, 8($s1)
     ll $s0, 8($s1)
     sc $s0, 8($s1)
+    jr $s0
+    jalr $s0

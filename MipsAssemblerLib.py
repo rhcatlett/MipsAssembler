@@ -6,6 +6,7 @@ shiftTypes=[]#shamt shift types/atyipcal r types-format: command $rd,$rs, shamt
 shiftVariableTypes=[]#variable shift types-format: command $rd,$rt,$rs
 multTypes=[]#mult types/ atypical r types-format: command $rs, $rt
 mfTypes=[]#mf types/ atyipcal r types-format: command $rd
+jumpAddrTypes=[]#typical jump types-form: command $rs
 
 #R Type Commds
 iTypes=[]#typical I types-format: command $rt, $rs, immediate
@@ -14,7 +15,6 @@ dataTypes=[]#typical data types-atypical I Type-format: command $rt, immediat($r
 
 #jumps not implmented
 #jumpTypes=[]#typical jump types-form: command addr
-#jumpAddrTypes=[]#typical jump types-form: command $rs
 #for commands that have no friends and have unqie command structures, currently just lui
 specialTypes=[]
 #dictionary for opcodes/functin codes and registers
@@ -118,6 +118,12 @@ def addMFType(label, op,func):
     function[label]=hexToBin(func,6)
     return
 
+#typical jump types-form: command $rs
+def addJumpAddrType(label, op,func):
+    jumpAddrTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    function[label]=hexToBin(func,6)
+    return
 
 
 #adds typical immidiate types to the dictionary
@@ -142,9 +148,10 @@ def addRelativeBranch(label, op):
     return
 
 
-def addSpecial(label, op):
+def addSpecial(label, op,func):
     specialTypes.append(label)
     opcodes[label]=hexToBin(op,6)
+    function[label]=hexToBin(func,6)
     return
 
 def initiliazeDictionaries():
@@ -172,7 +179,6 @@ def initiliazeDictionaries():
     addShiftVariableType('sllv','0','4')
     addShiftVariableType('srlv','0','6')
     addShiftVariableType('srav','0','7')
-    #addShiftVariableType('','0','')
 
 
     #mult types/ atypical r types-format: command $rs, $rt
@@ -180,13 +186,17 @@ def initiliazeDictionaries():
     addMultType('div','0','1a')
     addMultType('multu','0','19')
     addMultType('divu','0','1b')
-    #addMultType('','0','')
 
     #mf types/ atyipcal r types-format: command $rd
     addMFType('mfhi','0','10')
     addMFType('mflo','0','12')
 
-    #addMFType('','0','')
+
+
+    #typical jump types-form: command $rs
+    addJumpAddrType('jr','0','8')
+    addJumpAddrType('jalr','0','9')
+
 
     #typical I types-format: command $rt, $rs, immediate
     addIType('addi','8')
@@ -196,7 +206,6 @@ def initiliazeDictionaries():
     addIType('xori','e')
     addIType('slti','a')
     addIType('sltiu','b')
-    #addIType('','')
 
     #typical data types-atypical I Type-format: command $rt, immediat($rs)
     addDataType('lb','20')
@@ -214,7 +223,8 @@ def initiliazeDictionaries():
     addRelativeBranch('beq','4')
     addRelativeBranch('bne','5')
 
-    addSpecial('lui','f')
+    addSpecial('lui','f','0')
+    addSpecial('syscall','0','c')
     #make sure the dictionary codes are the correct length
     #not strictly necessary, but helps prevent preventable errors
     checkLength(opcodes,6,"Bad OPcode:")
@@ -295,6 +305,21 @@ def mfType(command):
     binary=op+rs+rt+rd+shamt+funct
     hexcode= binToHex(binary,8)
     return hexcode
+
+
+
+#typical jump types-form: command $rs
+def jumpAddrType(command):
+    op=opcodes[command[0]]
+    rs=register[command[1]]
+    rd='00000'
+    rt='00000'
+    shamt='00000'
+    funct=function[command[0]]
+    binary=op+rs+rt+rd+shamt+funct
+    hexcode= binToHex(binary,8)
+    return hexcode
+
 
 
 
