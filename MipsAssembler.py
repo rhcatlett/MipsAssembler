@@ -2,6 +2,8 @@
 
 import sys
 import MipsAssemblerLib as MAL
+#Personal library of useful functions
+#split for readability of code
 
 #load the dictionaries up with the defualt mips instructions
 MAL.initiliazeDictionaries()
@@ -32,17 +34,18 @@ splitFeilds =[x.split() for x in splitFeilds]
 #works with both freestanding labels and labels attached to other lines of code
 #if the label is freestanding, it is left as is to maintain raw count later
 #if the label is attached, it is removed from the line in splitfeilds
-lineIndex=0
-while lineIndex < len(splitFeilds):
-    x=splitFeilds[lineIndex]
-
+compiledLineIndex=0#only increment compiledLineIndex when we move up a line in the compiled code
+                    # a solo lable does not compile to any code, so it should not increment compiledLineIndex
+for x in splitFeilds:
     if x[0].endswith(':'):
-        mark=x[0].replace(':','')
-        MAL.labels[mark]=lineIndex
+        mark=x[0].replace(':','')#the labels dont have colons when attached to a command, so the colons
+                                #usefulness ends here, so drop it
+        MAL.labels[mark]=compiledLineIndex
         if len(x)!=1:
             del x[0]
-   
-    lineIndex+=1
+            compiledLineIndex+=1
+    else:
+        compiledLineIndex+=1
 
 #goes thrrough each line of commands after the labels have been handled
 #shunts the commands off to the appropriate functions
@@ -76,6 +79,22 @@ for currentLine in splitFeilds:
     #typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
     elif currentLine[0] in MAL.relativeBranchTypes:
         output+=MAL.relativeBranchType(currentLine,compiledLineIndex)
+    #special types without friends
+    elif currentLine[0] in MAL.specialTypes:
+        if currentLine[0]== 'lui':
+                op=MAL.opcodes[currentLine[0]]
+                rt=MAL.register[currentLine[1]]
+                rs='00000'
+                immediate=MAL.decToTwosComplment(currentLine[2],16)
+                binary=op+rs+rt+immediate
+                output+= MAL.binToHex(binary,8)
+
+        #branch should be unreachable, it should only be in specialTypes if it is implmented
+        else:
+            good=False
+            errorMessage='Cannot assemble line #'+str(sourceLineIndex)+':'+str(raw[sourceLineIndex-1])
+            output+=errorMessage
+            print (errorMessage)   
         #if the current line is just a label, it should not be turned into hex codes
         #still useful to trrack to help backtrack to errorfull lines in the source
     elif MAL.isLabel(currentLine):
@@ -88,7 +107,7 @@ for currentLine in splitFeilds:
          #but keep going to collect error messages
         good=False
         errorMessage='Cannot assemble line #'+str(sourceLineIndex)+':'+str(raw[sourceLineIndex-1])
-        out+=errorMessage
+        output+=errorMessage
         print (errorMessage)
     
     sourceLineIndex+=1#we always are

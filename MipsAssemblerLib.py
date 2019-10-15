@@ -15,7 +15,11 @@ dataTypes=[]#typical data types-atypical I Type-format: command $rt, immediat($r
 #jumps not implmented
 #jumpTypes=[]#typical jump types-form: command addr
 #jumpAddrTypes=[]#typical jump types-form: command $rs
+#for commands that have no friends and have unqie command structures, currently just lui
+specialTypes=[]
 #dictionary for opcodes/functin codes and registers
+
+
 opcodes={}
 function= {}
 register= {'zero':'00000','at':'00001','v0':'00010','v1':'00011','a0':'00100','a1':'00101','a2':'00110','a3':'00111',
@@ -47,11 +51,12 @@ def decToBin(input,bits):
 
 #same converts an int type input to a signed bits long binary string
 def decToTwosComplment(input, bits):
-    if input>=0:
-       val= decToBin(input, bits)  
+    intIn= int(input)
+    if intIn>=0:
+       val= decToBin(intIn, bits)  
     else:
         msb=-2**bits
-        rest=msb-input
+        rest=msb-intIn
         val=decToBin(rest,bits-1)
         val=val.replace('b','')
     return val
@@ -136,6 +141,12 @@ def addRelativeBranch(label, op):
     opcodes[label]=hexToBin(op,6)
     return
 
+
+def addSpecial(label, op):
+    specialTypes.append(label)
+    opcodes[label]=hexToBin(op,6)
+    return
+
 def initiliazeDictionaries():
     #Fill the dictionaries up
     #could be done statically, but it was a lot more typing and runtime speed isnt very important
@@ -194,15 +205,16 @@ def initiliazeDictionaries():
     addDataType('lhu','25')
     addDataType('lw','23')
     addDataType('sb','28')
+    addDataType('sh','29')
     addDataType('sw','2b')
-    addDataType('ll','20')
+    addDataType('ll','30')
     addDataType('sc','38')
 
     #typical reatlive branches-atypical I type -format: command $rt, $rs, LABEL
     addRelativeBranch('beq','4')
     addRelativeBranch('bne','5')
 
-
+    addSpecial('lui','f')
     #make sure the dictionary codes are the correct length
     #not strictly necessary, but helps prevent preventable errors
     checkLength(opcodes,6,"Bad OPcode:")
@@ -294,7 +306,7 @@ def iType(command):
     op=opcodes[command[0]]
     rt=register[command[1]]
     rs=register[command[2]]
-    immediate=decToBin(command[3],16)
+    immediate=decToTwosComplment(command[3],16)
     binary=op+rs+rt+immediate
     hexcode= binToHex(binary,8)
     return hexcode
@@ -304,7 +316,7 @@ def iType(command):
 def dataType(command):
     op=opcodes[command[0]]
     rt=register[command[1]]
-    immediate=decToBin(command[2],16)
+    immediate=decToTwosComplment(command[2],16)
     rs=register[command[3]]
     binary=op+rs+rt+immediate
     hexcode= binToHex(binary,8)
