@@ -117,7 +117,7 @@ for currentLine in splitFeilds:
     else:#if the command is unimplmented, dont print to file
          #but keep going to collect error messages
         good=False
-        errorMessage='Cannot assemble line #'+str(sourceLineIndex)+':'+str(raw[sourceLineIndex-1])
+        errorMessage='Cannot assemble '+str(sourceLineIndex)+' at '+str(raw[sourceLineIndex-1])
         output+=errorMessage
         print (errorMessage)
     
